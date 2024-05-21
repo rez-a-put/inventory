@@ -1,0 +1,125 @@
+Problem Solving Basic
+
+1.
+func miniMaxSum(arr []int) (min, max int64) {
+	var sum int64
+
+	sort.Slice(arr, func(i, j int) bool { return arr[i] < arr[j] })
+	for _, v := range arr {
+		sum += int64(v)
+	}
+
+	min = sum - int64(arr[len(arr)-1])
+	max = sum - int64(arr[0])
+
+	return min, max
+}
+
+
+2.
+func plusMinus(arr []int) (positiveStr, negativeStr, zeroStr string) {
+	var positive, negative, zero int
+	for _, v := range arr {
+		if v > 0 {
+			positive++
+		} else if v < 0 {
+			negative++
+		} else {
+			zero++
+		}
+	}
+
+	positiveStr = fmt.Sprintf("%.6f", float64(positive)/float64(len(arr)))
+	negativeStr = fmt.Sprintf("%.6f", float64(negative)/float64(len(arr)))
+	zeroStr = fmt.Sprintf("%.6f", float64(zero)/float64(len(arr)))
+
+	return positiveStr, negativeStr, zeroStr
+}
+
+
+3.
+func timeConversion(s string) string {
+	timeArr := strings.Split(s[:len(s)-2], ":")
+
+	if strings.ToLower(s[len(s)-2:]) == "pm" {
+		hour, _ := strconv.Atoi(timeArr[0])
+		if hour < 12 {
+			hour += 12
+		}
+		timeArr[0] = strconv.Itoa(hour)
+	} else {
+		if timeArr[0] == "12" {
+			timeArr[0] = "00"
+		}
+	}
+
+	return strings.Join(timeArr, ":")
+}
+
+--------------------------------------------------------------------------------------------------------
+
+Implementation Test - Backend (2)
+
+1.
+select * from employees;
+
+2.
+select count(*) manager_count from employees where job_title = "Manager";
+
+3.
+select 	name, salary from employees where department in ("Sales", "Marketing");
+
+4.
+select avg(salary) as average_salary
+from employees
+where joined_date >= date_add(now(), interval -5 year);
+
+5.
+select e.*, sum(sd.sales) as total_sales
+from employees as e
+join sales_data as sd on e.employee_id = sd.employee_id
+group by e.employee_id
+order by sum(sd.sales) desc
+limit 5;
+
+6.
+select e.name, e.salary, avg2.dept_avg
+from (
+    select avg(salary) as total_avg
+	from employees
+) as avg1
+join (
+  	select department, avg(salary) as dept_avg
+	from employees
+	group by department
+) as avg2 on avg1.total_avg < avg2.dept_avg
+join employees as e on avg2.department = e.department;
+
+7.
+with emp_most_sales as (
+	select sd.*, @rank := @rank + 1 as ranking
+    from (
+		select employee_id, sum(sales) as total_sales
+		from sales_data
+		group by employee_id
+		order by sum(sales) desc
+	) sd
+    cross join (select @rank := 0) as r
+)
+select e.name, ems.total_sales, ems.ranking
+from emp_most_sales as ems
+join employees as e on ems.employee_id = e.employee_id;
+
+8.
+delimiter $$
+
+create procedure GetSalaryByDept (
+    in dept_name varchar(50)
+)
+begin
+    select name, salary
+    from employees
+    where department = dept_name;
+end $$
+
+delimiter ;
